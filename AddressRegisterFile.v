@@ -1,5 +1,7 @@
+`timescale 1ns / 1ps
+
 module AddressRegisterFile(
-    input clk,
+    input Clock,
     input rst,
     input E,
     input [1:0] FunSel,
@@ -7,56 +9,49 @@ module AddressRegisterFile(
     input [1:0] OutCSel,
     input [1:0] OutDSel,
     input [15:0] I,
-    output reg [15:0] OutC,
-    output reg [15:0] OutD
+    output [15:0] OutC,
+    output [15:0] OutD
 );
 
-// 3 adet 16-bit register
-reg [15:0] PC, AR, SP;
+// ?� ba?lant?lar
+wire [15:0] pc_out, ar_out, sp_out;
 
-always @(posedge clk) begin
-    if (rst) begin
-        PC <= 16'b0;
-        AR <= 16'b0;
-        SP <= 16'b0;
-    end
-    else if (E) begin
-        if (RegSel[0]) PC <= apply_function(PC, FunSel, I);
-        if (RegSel[1]) AR <= apply_function(AR, FunSel, I);
-        if (RegSel[2]) SP <= apply_function(SP, FunSel, I);
-    end
-end
+// 3 adet Register16bit mod�l�
+Register16bit PC (
+    .Clock(Clock),
+    .rst(rst),
+    .E(RegSel[0] & E),
+    .FunSel(FunSel),
+    .I(I),
+    .Q(pc_out)
+);
 
-// Çıkış seçimleri
-always @(*) begin
-    case (OutCSel)
-        2'b00: OutC = PC;
-        2'b01: OutC = SP;
-        default: OutC = AR;
-    endcase
+Register16bit AR (
+    .Clock(Clock),
+    .rst(rst),
+    .E(RegSel[1] & E),
+    .FunSel(FunSel),
+    .I(I),
+    .Q(ar_out)
+);
 
-    case (OutDSel)
-        2'b00: OutD = PC;
-        2'b01: OutD = SP;
-        default: OutD = AR;
-    endcase
-end
+Register16bit SP (
+    .Clock(Clock),
+    .rst(rst),
+    .E(RegSel[2] & E),
+    .FunSel(FunSel),
+    .I(I),
+    .Q(sp_out)
+);
 
-// Fonksiyon uygulama bloğu
-function [15:0] apply_function;
-    input [15:0] current;
-    input [1:0] fs;
-    input [15:0] data;
+// Output se�imleri
+assign OutC = (OutCSel == 2'b00) ? pc_out :
+              (OutCSel == 2'b01) ? sp_out :
+              ar_out;
 
-    begin
-        case (fs)
-            2'b00: apply_function = current - 1;
-            2'b01: apply_function = current + 1;
-            2'b10: apply_function = data;
-            2'b11: apply_function = 16'b0;
-            default: apply_function = current;
-        endcase
-    end
-endfunction
+assign OutD = (OutDSel == 2'b00) ? pc_out :
+              (OutDSel == 2'b01) ? sp_out :
+              ar_out;
+
 
 endmodule

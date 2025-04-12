@@ -1,6 +1,7 @@
 `timescale 1ns / 1ps
 module Register16bit(
     input Clock,                 // <- İsim uyuşmalı
+    input rst, // adress register için ekledim
     input E,
     input [1:0] FunSel,
     input [15:0] I,
