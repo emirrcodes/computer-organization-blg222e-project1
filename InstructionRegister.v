@@ -1,20 +1,20 @@
 module InstructionRegister(
     input clk,
     input rst,
-    input Write,
-    input LH, // Load High (1) or Low (0)
-    input [7:0] I,
-    output reg [15:0] IROut
+    input E,
+    input L_H,               // 0: LSB, 1: MSB
+    input [7:0] I,           // 8-bit input
+    output reg [15:0] Q      // 16-bit register output
 );
 
 always @(posedge clk) begin
     if (rst)
-        IROut <= 16'b0;
-    else if (Write) begin
-        if (LH)
-            IROut[15:8] <= I;     // Load MSB
-        else
-            IROut[7:0]  <= I;     // Load LSB
+        Q <= 16'b0;
+    else if (E) begin
+        if (L_H == 1'b0)         // Load lower 8 bits
+            Q[7:0] <= I;
+        else                    // Load upper 8 bits
+            Q[15:8] <= I;
     end
 end
 
