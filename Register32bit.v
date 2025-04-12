@@ -1,13 +1,14 @@
+`timescale 1ns / 1ps
 module Register32bit(
-    input clk,
+    input Clock,
     input rst,
     input E,
     input [2:0] FunSel,
-    input [15:0] I,
+    input [31:0] I,
     output reg [31:0] Q
 );
 
-always @(posedge clk) begin
+always @(posedge Clock) begin
     if (rst)
         Q <= 32'b0;
     else if (E) begin
