@@ -1,20 +1,21 @@
+`timescale 1ns / 1ps
 module InstructionRegister(
-    input clk,
+    input Clock,
     input rst,
-    input E,
-    input L_H,               // 0: LSB, 1: MSB
-    input [7:0] I,           // 8-bit input
-    output reg [15:0] Q      // 16-bit register output
+    input Write,           // ← değiştirdik
+    input LH,              // ← isim sadeleştirildi (L_H → LH)
+    input [7:0] I,
+    output reg [15:0] IROut // ← Q → IROut
 );
 
-always @(posedge clk) begin
+always @(posedge Clock) begin
     if (rst)
-        Q <= 16'b0;
-    else if (E) begin
-        if (L_H == 1'b0)         // Load lower 8 bits
-            Q[7:0] <= I;
-        else                    // Load upper 8 bits
-            Q[15:8] <= I;
+        IROut <= 16'b0;
+    else if (Write) begin
+        if (LH == 1'b0)
+            IROut[7:0] <= I;
+        else
+            IROut[15:8] <= I;
     end
 end
 
