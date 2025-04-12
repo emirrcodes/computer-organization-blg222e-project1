@@ -1,3 +1,4 @@
+`timescale 1ns / 1ps
 module Register16bit(
     input Clock,                 // <- İsim uyuşmalı
     input E,
