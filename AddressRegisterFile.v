@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+// 3/4 testten geçiyor
+
 module AddressRegisterFile(
     input Clock,
     input rst,
