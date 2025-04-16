@@ -1,11 +1,7 @@
 `timescale 1ns / 1ps
 
-// 3/4 testten geçiyor
-
 module AddressRegisterFile(
     input Clock,
-    input rst,
-    input E,
     input [1:0] FunSel,
     input [2:0] RegSel,
     input [1:0] OutCSel,
@@ -15,14 +11,13 @@ module AddressRegisterFile(
     output [15:0] OutD
 );
 
-// ?� ba?lant?lar
 wire [15:0] pc_out, ar_out, sp_out;
 
-// 3 adet Register16bit mod�l�
+// Register16bit bağlantıları — DOĞRU SIRALAMA
 Register16bit PC (
     .Clock(Clock),
-    .rst(rst),
-    .E(RegSel[0] & E),
+    .rst(1'b0),
+    .E(RegSel[2]),  // ← PC: RegSel[2]
     .FunSel(FunSel),
     .I(I),
     .Q(pc_out)
@@ -30,8 +25,8 @@ Register16bit PC (
 
 Register16bit AR (
     .Clock(Clock),
-    .rst(rst),
-    .E(RegSel[1] & E),
+    .rst(1'b0),
+    .E(RegSel[0]),  // ← AR: RegSel[0]
     .FunSel(FunSel),
     .I(I),
     .Q(ar_out)
@@ -39,14 +34,14 @@ Register16bit AR (
 
 Register16bit SP (
     .Clock(Clock),
-    .rst(rst),
-    .E(RegSel[2] & E),
+    .rst(1'b0),
+    .E(RegSel[1]),  // ← SP: RegSel[1]
     .FunSel(FunSel),
     .I(I),
     .Q(sp_out)
 );
 
-// Output se�imleri
+// Output seçimleri sabit kalabilir
 assign OutC = (OutCSel == 2'b00) ? pc_out :
               (OutCSel == 2'b01) ? sp_out :
               ar_out;
@@ -54,6 +49,5 @@ assign OutC = (OutCSel == 2'b00) ? pc_out :
 assign OutD = (OutDSel == 2'b00) ? pc_out :
               (OutDSel == 2'b01) ? sp_out :
               ar_out;
-
 
 endmodule

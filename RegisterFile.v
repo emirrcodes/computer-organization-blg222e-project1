@@ -1,60 +1,85 @@
 `timescale 1ns / 1ps
 
-
-// 2/4 geçiyo testlerden
-module RegisterFile (
+module RegisterFile(
     input Clock,
-    input rst,
+    input [2:0] OutASel, OutBSel,
+    input [3:0] RegSel, ScrSel,
     input [2:0] FunSel,
-    input [3:0] RegSel,
-    input [3:0] ScrSel,
-    input [2:0] OutASel,
-    input [2:0] OutBSel,
-    input [31:0] I,
-    output [31:0] OutA,
-    output [31:0] OutB
+    input [31:0] I, // Changed from [7:0] to [31:0]
+    output [31:0] OutA, OutB
 );
 
-wire [31:0] OutR1, OutR2, OutR3, OutR4;
-wire [31:0] OutS1, OutS2, OutS3, OutS4;
+    // General Purpose Registers (R1-R4)
+    wire [31:0] R1_Q, R2_Q, R3_Q, R4_Q;
+    reg R1_E, R2_E, R3_E, R4_E;
 
-    // 8 adet Register mod�l�
-    Register32bit R1 (.Clock(Clock), .rst(rst), .E(RegSel[0]), .FunSel(FunSel), .I(I), .Q(OutR1));
-    Register32bit R2 (.Clock(Clock), .rst(rst), .E(RegSel[1]), .FunSel(FunSel), .I(I), .Q(OutR2));
-    Register32bit R3 (.Clock(Clock), .rst(rst), .E(RegSel[2]), .FunSel(FunSel), .I(I), .Q(OutR3));
-    Register32bit R4 (.Clock(Clock), .rst(rst), .E(RegSel[3]), .FunSel(FunSel), .I(I), .Q(OutR4));
-    Register32bit S1 (.Clock(Clock), .rst(rst), .E(ScrSel[0]), .FunSel(FunSel), .I(I), .Q(OutS1));
-    Register32bit S2 (.Clock(Clock), .rst(rst), .E(ScrSel[1]), .FunSel(FunSel), .I(I), .Q(OutS2));
-    Register32bit S3 (.Clock(Clock), .rst(rst), .E(ScrSel[2]), .FunSel(FunSel), .I(I), .Q(OutS3));
-    Register32bit S4 (.Clock(Clock), .rst(rst), .E(ScrSel[3]), .FunSel(FunSel), .I(I), .Q(OutS4));
+    // Scratch Registers (S1-S4)
+    wire [31:0] S1_Q, S2_Q, S3_Q, S4_Q;
+    reg S1_E, S2_E, S3_E, S4_E;
 
-    // �?k?? se�imleri
-    reg [31:0] outA_temp, outB_temp;
-    assign OutA = outA_temp;
-    assign OutB = outB_temp;
+    // Register Instances
+    Register32bit R1(.Clock(Clock), .rst(1'b0), .E(R1_E), .FunSel(FunSel), .I(I), .Q(R1_Q));
+    Register32bit R2(.Clock(Clock), .rst(1'b0), .E(R2_E), .FunSel(FunSel), .I(I), .Q(R2_Q));
+    Register32bit R3(.Clock(Clock), .rst(1'b0), .E(R3_E), .FunSel(FunSel), .I(I), .Q(R3_Q));
+    Register32bit R4(.Clock(Clock), .rst(1'b0), .E(R4_E), .FunSel(FunSel), .I(I), .Q(R4_Q));
 
+    Register32bit S1(.Clock(Clock), .rst(1'b0), .E(S1_E), .FunSel(FunSel), .I(I), .Q(S1_Q));
+    Register32bit S2(.Clock(Clock), .rst(1'b0), .E(S2_E), .FunSel(FunSel), .I(I), .Q(S2_Q));
+    Register32bit S3(.Clock(Clock), .rst(1'b0), .E(S3_E), .FunSel(FunSel), .I(I), .Q(S3_Q));
+    Register32bit S4(.Clock(Clock), .rst(1'b0), .E(S4_E), .FunSel(FunSel), .I(I), .Q(S4_Q));
+
+    // Output Muxes
+    assign OutA = (OutASel == 3'b000) ? R1_Q :
+                  (OutASel == 3'b001) ? R2_Q :
+                  (OutASel == 3'b010) ? R3_Q :
+                  (OutASel == 3'b011) ? R4_Q :
+                  (OutASel == 3'b100) ? S1_Q :
+                  (OutASel == 3'b101) ? S2_Q :
+                  (OutASel == 3'b110) ? S3_Q : S4_Q;
+
+    assign OutB = (OutBSel == 3'b000) ? R1_Q :
+                  (OutBSel == 3'b001) ? R2_Q :
+                  (OutBSel == 3'b010) ? R3_Q :
+                  (OutBSel == 3'b011) ? R4_Q :
+                  (OutBSel == 3'b100) ? S1_Q :
+                  (OutBSel == 3'b101) ? S2_Q :
+                  (OutBSel == 3'b110) ? S3_Q : S4_Q;
+
+    // Enable Logic
     always @(*) begin
-        case (OutASel)
-            3'd0: outA_temp = OutR1;
-            3'd1: outA_temp = OutR2;
-            3'd2: outA_temp = OutR3;
-            3'd3: outA_temp = OutR4;
-            3'd4: outA_temp = OutS1;
-            3'd5: outA_temp = OutS2;
-            3'd6: outA_temp = OutS3;
-            3'd7: outA_temp = OutS4;
-        endcase
+        // General Register Enables
+        R1_E = (RegSel == 4'b1000 || RegSel == 4'b1010 || RegSel == 4'b1001 ||
+                RegSel == 4'b1110 || RegSel == 4'b1101 || RegSel == 4'b1011 ||
+                RegSel == 4'b1111);
 
-        case (OutBSel)
-            3'd0: outB_temp = OutR1;
-            3'd1: outB_temp = OutR2;
-            3'd2: outB_temp = OutR3;
-            3'd3: outB_temp = OutR4;
-            3'd4: outB_temp = OutS1;
-            3'd5: outB_temp = OutS2;
-            3'd6: outB_temp = OutS3;
-            3'd7: outB_temp = OutS4;
-        endcase
+        R2_E = (RegSel == 4'b0100 || RegSel == 4'b0110 || RegSel == 4'b0101 ||
+                RegSel == 4'b1110 || RegSel == 4'b1101 || RegSel == 4'b0111 ||
+                RegSel == 4'b1111);
+
+        R3_E = (RegSel == 4'b0010 || RegSel == 4'b0110 || RegSel == 4'b0011 ||
+                RegSel == 4'b1010 || RegSel == 4'b1110 || RegSel == 4'b1011 ||
+                RegSel == 4'b1111);
+
+        R4_E = (RegSel == 4'b0001 || RegSel == 4'b0101 || RegSel == 4'b0011 ||
+                RegSel == 4'b1001 || RegSel == 4'b1101 || RegSel == 4'b0111 ||
+                RegSel == 4'b1011 || RegSel == 4'b1111);
+
+        // Scratch Register Enables
+        S1_E = (ScrSel == 4'b1000 || ScrSel == 4'b1010 || ScrSel == 4'b1001 ||
+                ScrSel == 4'b1110 || ScrSel == 4'b1101 || ScrSel == 4'b1011 ||
+                ScrSel == 4'b1111);
+
+        S2_E = (ScrSel == 4'b0100 || ScrSel == 4'b0110 || ScrSel == 4'b0101 ||
+                ScrSel == 4'b1110 || ScrSel == 4'b1101 || ScrSel == 4'b0111 ||
+                ScrSel == 4'b1111);
+
+        S3_E = (ScrSel == 4'b0010 || ScrSel == 4'b0110 || ScrSel == 4'b0011 ||
+                ScrSel == 4'b1010 || ScrSel == 4'b1110 || ScrSel == 4'b1011 ||
+                ScrSel == 4'b1111);
+
+        S4_E = (ScrSel == 4'b0001 || ScrSel == 4'b0101 || ScrSel == 4'b0011 ||
+                ScrSel == 4'b1001 || ScrSel == 4'b1101 || ScrSel == 4'b0111 ||
+                ScrSel == 4'b1011 || ScrSel == 4'b1111);
     end
 
 endmodule
