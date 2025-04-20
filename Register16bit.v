@@ -1,7 +1,8 @@
 `timescale 1ns / 1ps
+
 module Register16bit(
-    input Clock,                 // <- İsim uyuşmalı
-    input rst, // adress register için ekledim
+    input Clock,
+    input rst,
     input E,
     input [1:0] FunSel,
     input [15:0] I,
@@ -9,13 +10,14 @@ module Register16bit(
 );
 
 always @(posedge Clock) begin
-    if (E) begin
+    if (rst)
+        Q <= 16'b0;
+    else if (E) begin
         case (FunSel)
-            2'b00: Q <= Q - 1;        // Decrement
-            2'b01: Q <= Q + 1;        // Increment
-            2'b10: Q <= I;            // Load
-            2'b11: Q <= 16'b0;        // Clear
-            default: Q <= Q;          // Retain (opsiyonel)
+            2'b00: Q <= Q - 1;
+            2'b01: Q <= Q + 1;
+            2'b10: Q <= I;
+            2'b11: Q <= 16'b0;
         endcase
     end
 end

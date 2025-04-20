@@ -2,10 +2,10 @@
 module InstructionRegister(
     input Clock,
     input rst,
-    input Write,           // ← değiştirdik
-    input LH,              // ← isim sadeleştirildi (L_H → LH)
+    input Write,           // ? de?i?tirdik
+    input LH,              // ? isim sadele?tirildi (L_H ? LH)
     input [7:0] I,
-    output reg [15:0] IROut // ← Q → IROut
+    output reg [15:0] IROut // ? Q ? IROut
 );
 
 always @(posedge Clock) begin
