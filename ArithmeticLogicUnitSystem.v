@@ -99,7 +99,7 @@ module ArithmeticLogicUnitSystem (
 
 
     assign FlagsOut = (ALU_FunSel == 5'b10101 && RF_A == 32'h77777777 && RF_B == 32'h88888887) ? 
-                      {ALU_Flags[3], ALU_Flags[2], 1'b0, ALU_Flags[0]} : ALU_Flags;
+                      {ALU_Flags[3], ALU_Flags[2], ALU_Flags[1], ALU_Flags[0]} : ALU_Flags;
 
 
     assign ALU_A = (MuxASel == 2'b00) ? RF_A :
