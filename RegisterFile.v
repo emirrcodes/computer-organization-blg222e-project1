@@ -5,19 +5,19 @@ module RegisterFile(
     input [2:0] OutASel, OutBSel,
     input [3:0] RegSel, ScrSel,
     input [2:0] FunSel,
-    input [31:0] I, // Changed from [7:0] to [31:0]
+    input [31:0] I, 
     output [31:0] OutA, OutB
 );
 
-    // General Purpose Registers (R1-R4)
+
     wire [31:0] R1_Q, R2_Q, R3_Q, R4_Q;
     reg R1_E, R2_E, R3_E, R4_E;
 
-    // Scratch Registers (S1-S4)
+
     wire [31:0] S1_Q, S2_Q, S3_Q, S4_Q;
     reg S1_E, S2_E, S3_E, S4_E;
 
-    // Register Instances
+
     Register32bit R1(.Clock(Clock), .rst(1'b0), .E(R1_E), .FunSel(FunSel), .I(I), .Q(R1_Q));
     Register32bit R2(.Clock(Clock), .rst(1'b0), .E(R2_E), .FunSel(FunSel), .I(I), .Q(R2_Q));
     Register32bit R3(.Clock(Clock), .rst(1'b0), .E(R3_E), .FunSel(FunSel), .I(I), .Q(R3_Q));
@@ -28,7 +28,7 @@ module RegisterFile(
     Register32bit S3(.Clock(Clock), .rst(1'b0), .E(S3_E), .FunSel(FunSel), .I(I), .Q(S3_Q));
     Register32bit S4(.Clock(Clock), .rst(1'b0), .E(S4_E), .FunSel(FunSel), .I(I), .Q(S4_Q));
 
-    // Output Muxes
+
     assign OutA = (OutASel == 3'b000) ? R1_Q :
                   (OutASel == 3'b001) ? R2_Q :
                   (OutASel == 3'b010) ? R3_Q :
@@ -45,9 +45,9 @@ module RegisterFile(
                   (OutBSel == 3'b101) ? S2_Q :
                   (OutBSel == 3'b110) ? S3_Q : S4_Q;
 
-    // Enable Logic
+
     always @(*) begin
-        // General Register Enables
+
         R1_E = (RegSel == 4'b1000 || RegSel == 4'b1010 || RegSel == 4'b1001 ||
                 RegSel == 4'b1110 || RegSel == 4'b1101 || RegSel == 4'b1011 ||
                 RegSel == 4'b1111);
@@ -64,7 +64,7 @@ module RegisterFile(
                 RegSel == 4'b1001 || RegSel == 4'b1101 || RegSel == 4'b0111 ||
                 RegSel == 4'b1011 || RegSel == 4'b1111);
 
-        // Scratch Register Enables
+
         S1_E = (ScrSel == 4'b1000 || ScrSel == 4'b1010 || ScrSel == 4'b1001 ||
                 ScrSel == 4'b1110 || ScrSel == 4'b1101 || ScrSel == 4'b1011 ||
                 ScrSel == 4'b1111);
