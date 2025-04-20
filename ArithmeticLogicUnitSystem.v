@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module ArithmeticLogicUnitSystem (
+module ArithmeticLogicUnitSystem(
     input Clock,
     input [2:0] RF_OutASel, RF_OutBSel, RF_FunSel,
     input [3:0] RF_RegSel, RF_ScrSel,
@@ -8,126 +8,120 @@ module ArithmeticLogicUnitSystem (
     input ALU_WF,
     input [1:0] ARF_OutCSel, ARF_OutDSel, ARF_FunSel,
     input [2:0] ARF_RegSel,
-    input IR_LH, IR_Write, Mem_WR, Mem_CS,
     input [1:0] MuxASel, MuxBSel, MuxCSel,
     input MuxDSel,
-    input [1:0] DR_FunSel,
     input DR_E,
-    output [31:0] OutA, OutB, ALUOut, MuxAOut, MuxBOut, MuxDOut,
+    input [1:0] DR_FunSel,
+    input IR_LH, IR_Write,
+    input Mem_WR, Mem_CS,
+    output [31:0] OutA, OutB, ALUOut, MuxAOut, MuxBOut, MuxDOut, DROut,
+    output [3:0] FlagsOut,
     output [7:0] MuxCOut, MemOut,
-    output [15:0] OutC, Address, IROut,
-    output [31:0] DROut,
-    output [3:0] FlagsOut
+    output [15:0] OutC, Address, IROut
 );
 
+    wire [31:0] valA, valB, aluOutput, drOutput;
+    wire [15:0] arfOutC, arfOutD, irOutput;
+    wire [3:0] statusFlags;
+    wire [7:0] muxCout;
 
-    wire [31:0] RF_A, RF_B, ALU_A, ALU_B, DR_Q;
-    wire [15:0] ARF_C, ARF_D, IR_Q;
-    wire [7:0] Mem_Q;
-    wire [3:0] ALU_Flags;
-    wire [31:0] ALUOut_internal;
-
-
-    RegisterFile RF (
-        .Clock(Clock),
-        .OutASel(RF_OutASel),
-        .OutBSel(RF_OutBSel),
-        .FunSel(RF_FunSel),
-        .RegSel(RF_RegSel),
-        .ScrSel(RF_ScrSel),
-        .I(ALUOut),
-        .OutA(RF_A),
-        .OutB(RF_B)
-    );
-
-
-    AddressRegisterFile ARF (
-        .Clock(Clock),
-        .FunSel(ARF_FunSel),
-        .RegSel(ARF_RegSel),
-        .OutCSel(ARF_OutCSel),
-        .OutDSel(ARF_OutDSel),
-        .I(ALUOut[15:0]),
-        .OutC(ARF_C),
-        .OutD(ARF_D)
-    );
-
-
-    InstructionRegister IR (
-        .Clock(Clock),
-        .rst(1'b0),
-        .Write(IR_Write),
-        .LH(IR_LH),
-        .I(Mem_Q),
-        .IROut(IR_Q)
-    );
-
-
-    DataRegister DR (
-        .Clock(Clock),
-        .rst(1'b0),
-        .E(DR_E),
-        .FunSel(DR_FunSel),
-        .I(MuxCOut),
-        .DROut(DR_Q)
-    );
-
-
-    Memory MEM (
-        .Clock(Clock),
-        .Address(ARF_D),
-        .Data(MuxCOut),
-        .WR(Mem_WR),
-        .CS(Mem_CS),
-        .MemOut(Mem_Q)
-    );
-
+    assign MuxDOut = MuxDSel ? {16'd0, arfOutC} : valA;
 
     ArithmeticLogicUnit ALU (
-        .FunSel(ALU_FunSel),
-        .A(ALU_A),
-        .B(ALU_B),
-        .WF(ALU_WF),
-        .Clock(Clock),
-        .ALUOut(ALUOut_internal),
-        .FlagsOut(ALU_Flags)
+        .A(MuxDOut), .B(valB), .FunSel(ALU_FunSel), .WF(ALU_WF),
+        .Clock(Clock), .ALUOut(aluOutput), .FlagsOut(statusFlags)
     );
 
+    assign ALUOut = aluOutput;
+    assign FlagsOut = statusFlags;
 
-    assign ALUOut = (ALU_FunSel == 5'b10101 && RF_A == 32'h77777777 && RF_B == 32'h88888887) ? 
-                    32'hFFFFFFFE : ALUOut_internal;
+    RegisterFile RF (
+        .I(aluOutput), .OutASel(RF_OutASel), .OutBSel(RF_OutBSel),
+        .FunSel(RF_FunSel), .RegSel(RF_RegSel), .ScrSel(RF_ScrSel),
+        .Clock(Clock), .OutA(valA), .OutB(valB)
+    );
 
+    assign OutA = valA;
+    assign OutB = valB;
 
-    assign FlagsOut = (ALU_FunSel == 5'b10101 && RF_A == 32'h77777777 && RF_B == 32'h88888887) ? 
-                      {ALU_Flags[3], ALU_Flags[2], ALU_Flags[1], ALU_Flags[0]} : ALU_Flags;
+    AddressRegisterFile ARF (
+        .I(aluOutput), .OutCSel(ARF_OutCSel), .OutDSel(ARF_OutDSel),
+        .FunSel(ARF_FunSel), .RegSel(ARF_RegSel), .Clock(Clock),
+        .OutC(arfOutC), .OutD(arfOutD)
+    );
 
+    assign OutC = arfOutC;
+    assign Address = arfOutD;
 
-    assign ALU_A = (MuxASel == 2'b00) ? RF_A :
-                   (MuxASel == 2'b01) ? {16'b0, ARF_C} :
-                   (MuxASel == 2'b10) ? DR_Q :
-                   {24'b0, IR_Q[7:0]};
+    Memory MEM (
+        .Address(arfOutD), .Data(muxCout), .WR(Mem_WR), .CS(Mem_CS),
+        .Clock(Clock), .MemOut(MemOut)
+    );
 
-    assign ALU_B = (MuxBSel == 2'b00) ? RF_B :
-                   (MuxBSel == 2'b01) ? {16'b0, ARF_C} :
-                   (MuxBSel == 2'b10) ? DR_Q :
-                   {24'b0, IR_Q[7:0]};
+    Mux4to1_8 MuxC (
+        .in0(aluOutput[7:0]), .in1(aluOutput[15:8]),
+        .in2(aluOutput[23:16]), .in3(aluOutput[31:24]),
+        .sel(MuxCSel), .out(muxCout)
+    );
 
-    assign MuxCOut = (MuxCSel == 2'b00) ? ALUOut[7:0] :
-                     (MuxCSel == 2'b01) ? ALUOut[15:8] :
-                     (MuxCSel == 2'b10) ? ALUOut[23:16] :
-                     ALUOut[31:24];
+    assign MuxCOut = muxCout;
 
-    assign MuxDOut = (MuxDSel == 1'b0) ? RF_A : {16'b0, ARF_C};
+    DataRegister DR (
+        .I(muxCout), .E(DR_E), .FunSel(DR_FunSel),
+        .Clock(Clock), .DROut(drOutput)
+    );
 
+    assign DROut = drOutput;
 
-    assign OutA = RF_A;
-    assign OutB = RF_B;
-    assign MuxAOut = ALUOut;
-    assign MuxBOut = ALUOut;
-    assign OutC = ARF_C;
-    assign Address = ARF_D;
-    assign MemOut = Mem_Q;
-    assign IROut = IR_Q;
-    assign DROut = DR_Q;
+    InstructionRegister IR (
+        .I(MemOut), .LH(IR_LH), .Write(IR_Write),
+        .Clock(Clock), .IROut(irOutput)
+    );
 
+    assign IROut = irOutput;
+
+    Mux4to1_32 MuxA (
+        .in0(aluOutput), .in1({16'd0, arfOutC}),
+        .in2(drOutput), .in3({24'd0, irOutput[7:0]}),
+        .sel(MuxASel), .out(MuxAOut)
+    );
+
+    Mux4to1_32 MuxB (
+        .in0(aluOutput), .in1({16'd0, arfOutC}),
+        .in2(drOutput), .in3({24'd0, irOutput[7:0]}),
+        .sel(MuxBSel), .out(MuxBOut)
+    );
+
+endmodule
+
+module Mux4to1_32 (
+    input [31:0] in0, in1, in2, in3,
+    input [1:0] sel,
+    output reg [31:0] out
+);
+    always @(*) begin
+        case (sel)
+            2'b00: out = in0;
+            2'b01: out = in1;
+            2'b10: out = in2;
+            2'b11: out = in3;
+            default: out = 32'b0;
+        endcase
+    end
+endmodule
+
+module Mux4to1_8 (
+    input [7:0] in0, in1, in2, in3,
+    input [1:0] sel,
+    output reg [7:0] out
+);
+    always @(*) begin
+        case (sel)
+            2'b00: out = in0;
+            2'b01: out = in1;
+            2'b10: out = in2;
+            2'b11: out = in3;
+            default: out = 8'b0;
+        endcase
+    end
 endmodule
