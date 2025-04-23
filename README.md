@@ -1,4 +1,4 @@
-# 🔧 BLG222E Project 1 — Computer Organization
+# 🔧 Computer Organization - BLG222E - Project 1
 
 > **Istanbul Technical University**  
 > Computer Engineering Department – Spring 2025  
