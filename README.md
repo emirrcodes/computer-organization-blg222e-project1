@@ -52,7 +52,7 @@ This project simulates a **basic computer system** capable of performing arithme
 - Understood the value of clean interfaces and teamwork.
 
 ## 📁 Project Structure
-.
+```
 ├── AddressRegisterFile.v
 ├── AddressRegisterFileSimulation.v
 ├── ArithmeticLogicUnit.v
@@ -75,3 +75,4 @@ This project simulates a **basic computer system** capable of performing arithme
 ├── RegisterFileSimulation.v
 ├── Report.pdf
 └── Run.bat
+```
